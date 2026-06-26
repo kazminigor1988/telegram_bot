@@ -9,14 +9,28 @@
       "name": "Your Name",
       "reminders": [
         {
-          "id": "morning-vitamin-d",
+          "id": "Lar",
           "type": "medication",
+          "endDate": "2026-07-03",
           "params": {
-            "name": "Вітамін D",
-            "dose": "1 таблетка",
-            "mealTiming": "with"
+            "name": "Хелпекс лар",
+            "dose": "4 пшики на горло"
           },
-          "times": ["08:00", "20:00"],
+          "times": ["10:00", "14:00", "20:00"],
+          "repeat": {
+            "intervalMin": 15,
+            "maxRetries": 3
+          }
+        },
+        {
+          "id": "Strepsils",
+          "type": "medication",
+          "endDate": "2026-07-02",
+          "params": {
+            "name": "Strepsils",
+            "dose": "1 таблетка"
+          },
+          "times": ["10:00", "12:00", "14:00", "17:00", "20:00"],
           "repeat": {
             "intervalMin": 15,
             "maxRetries": 3

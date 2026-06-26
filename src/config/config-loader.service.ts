@@ -1,6 +1,7 @@
 import { Injectable, OnModuleInit, Logger } from '@nestjs/common';
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
+import { ZodError } from 'zod';
 import { AppConfig, configSchema } from './schema';
 
 @Injectable()
@@ -24,8 +25,34 @@ export class ConfigLoaderService implements OnModuleInit {
     const raw = await fs.readFile(this.configPath, 'utf8');
     const parsed = JSON.parse(raw);
     const resolved = this.resolveEnvPlaceholders(parsed);
-    this.cachedConfig = configSchema.parse(resolved);
+    try {
+      this.cachedConfig = configSchema.parse(resolved);
+    } catch (error) {
+      if (error instanceof ZodError) {
+        throw new Error(this.formatZodError(error, resolved));
+      }
+      throw error;
+    }
     this.logger.log(`Config loaded from ${this.configPath}`);
+  }
+
+  private formatZodError(error: ZodError, source: unknown): string {
+    const lines = error.issues.map(issue => {
+      const path = issue.path.join('.');
+      const received = this.valueAtPath(source, issue.path);
+      const receivedStr = JSON.stringify(received);
+      return `  • path "${path}": ${issue.message} (received: ${receivedStr})`;
+    });
+    return `Config validation failed:\n${lines.join('\n')}`;
+  }
+
+  private valueAtPath(source: unknown, segments: ReadonlyArray<PropertyKey>): unknown {
+    return segments.reduce<unknown>((current, segment) => {
+      if (current && typeof current === 'object') {
+        return (current as Record<PropertyKey, unknown>)[segment];
+      }
+      return undefined;
+    }, source);
   }
 
   get(): AppConfig {
