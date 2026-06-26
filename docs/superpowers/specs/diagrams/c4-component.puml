@@ -1,0 +1,32 @@
+@startuml c4-component
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Component.puml
+
+title Component diagram — Telegram Reminder Bot
+
+Person(authorizedUser, "Authorized User", "Telegram user з whitelist (telegramId у config.json)")
+System_Ext(telegramApi, "Telegram Bot API", "Long-polling. Отримує updates, надсилає повідомлення")
+
+Container_Boundary(app, "Node.js process (NestJS)") {
+    Component(configModule, "ConfigModule", "ConfigLoaderService", "Читає + zod-валідація config.json на старті (OnModuleInit)")
+    Component(botModule, "BotModule", "nestjs-telegraf, AuthGuard, Commands, Actions", "Прийом /start, /next, callback_query 'ack:*'")
+    Component(remindersModule, "RemindersModule", "Scheduler + RepeatEngine + Registry + Handlers", "Cron-jobs, повтори, plugin-handlers для типів")
+    Component(stateModule, "StateModule", "StateStore", "In-memory Map активних непідтверджених reminder-ів. Без persistence — при рестарті очищується.")
+}
+
+SystemDb_Ext(configFile, "config.json", "Розклад, користувачі, токен, TZ")
+
+Rel(authorizedUser, telegramApi, "Команди / натискання кнопок")
+Rel(telegramApi, botModule, "Updates (messages, callback_query)")
+Rel(botModule, telegramApi, "sendMessage / editMessageReplyMarkup")
+
+Rel(configModule, configFile, "Load + validate", "fs.readFile")
+
+Rel(remindersModule, configModule, "Читає розклад + TZ")
+Rel(remindersModule, stateModule, "markActive / get / clear")
+Rel(remindersModule, botModule, "Просить відправити reminder (через BotGateway)")
+
+Rel(botModule, remindersModule, "cancel() при ack")
+Rel(botModule, stateModule, "clear() при ack")
+Rel(botModule, configModule, "Whitelist для AuthGuard")
+
+@enduml

@@ -1,0 +1,61 @@
+@startuml sequence-reminder-lifecycle
+title Reminder lifecycle — fire, retry, ack/expire
+
+actor "Authorized User" as user
+participant "Telegram API" as tg
+participant "SchedulerService" as scheduler
+participant "BotGateway" as bot
+participant "StateStore" as state
+participant "RepeatEngineService" as repeat
+participant "AckAction" as ack
+
+== Cron спрацював о 08:00 (запланований час) ==
+
+scheduler -> scheduler : isReminderExpired(reminder)
+
+alt expired (today > endDate)
+    scheduler -->] : log "skipping" + return
+else not expired
+    scheduler -> scheduler : handler.buildMessage(params, ctx)
+    scheduler -> bot : send(userId, text, buttons)
+    bot -> tg : sendMessage(...)
+    tg --> bot : { message_id }
+    bot --> scheduler : msg
+
+    scheduler -> state : markActive(userId, reminderId, { fireTs, messageId, ... })
+    scheduler -> repeat : scheduleNext(userId, reminder)
+    repeat -> repeat : setTimeout(intervalMs)
+end
+
+== Гілка A — користувач натискає «✅ Прийняв» ==
+
+user -> tg : tap inline button
+tg -> ack : callback_query "ack:userId:reminderId:fireTs"
+ack -> repeat : cancel(userId, reminderId)
+repeat -> repeat : clearTimeout
+ack -> state : clear(userId, reminderId)
+ack -> tg : answerCbQuery("Зафіксовано ✅")
+ack -> tg : editMessageReplyMarkup(undefined)
+
+== Гілка B — користувач не реагує, спрацьовує retry ==
+
+repeat -> repeat : setTimeout fires (через intervalMs)
+repeat -> state : get(userId, reminderId)
+state --> repeat : ActiveReminder | undefined
+
+alt active reminder is undefined (вже acked у вікно між timer і виконанням)
+    repeat -->] : return
+else retryAttempt < maxRetries
+    repeat -> repeat : ++retryAttempt
+    repeat -> repeat : handler.buildMessage(params, { retryAttempt })
+    repeat -> bot : send(userId, text, buttons)
+    bot -> tg : sendMessage(...)
+    tg --> bot : { message_id }
+    repeat -> state : update(userId, reminderId, { messageId, retryAttempt })
+    repeat -> repeat : scheduleNext (рекурсивно)
+else retryAttempt >= maxRetries
+    repeat -> state : clear(userId, reminderId)
+    repeat -->] : warn log "Max retries reached"
+end
+
+@enduml

@@ -1,0 +1,38 @@
+@startuml state-reminder-lifecycle
+title Reminder lifecycle — FSM для одного reminder-а
+
+[*] --> Inactive : config завантажено,\ncron-job зареєстровано
+
+state Inactive {
+    Inactive : Немає запису у StateStore.\nЧекаємо наступний cron-tick.
+}
+
+state Active {
+    Active : Є запис у StateStore:\n  fireTs, messageId,\n  retryAttempt, maxRetries.\nКнопка «✅ Прийняв» активна.
+}
+
+Inactive --> Active : cron fire\n(reminder не expired)
+Active --> Active : retry timer fires\n(retryAttempt < maxRetries)
+Active --> Inactive : **ack** | **max retries** | **expired**
+
+note right of Inactive
+  **Cron fire після endDate:**
+  fire() миттєво повертає
+  через isReminderExpired() —
+  переходу в Active немає.
+end note
+
+note right of Active
+  **Гонка таймера і ack:**
+  якщо ack прийшов між
+  setTimeout-fire і state.get,
+  state.get → undefined,
+  retry тихо повертається.
+
+  **Idempotent ack:**
+  повторне натискання після
+  переходу в Inactive — тихий
+  no-op (state вже clear).
+end note
+
+@enduml
