@@ -25,6 +25,7 @@
     "cron": "^4.4.0",
     "date-fns": "^4.4.0",
     "date-fns-tz": "^3.2.0",
+    "dotenv": "^17.4.2",
     "nestjs-pino": "^4.6.1",
     "nestjs-telegraf": "^2.9.1",
     "pino": "^10.3.1",
