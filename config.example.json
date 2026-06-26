@@ -14,7 +14,7 @@
           "params": {
             "name": "Вітамін D",
             "dose": "1 таблетка",
-            "withFood": true
+            "mealTiming": "with"
           },
           "times": ["08:00", "20:00"],
           "repeat": {

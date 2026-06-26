@@ -5,10 +5,16 @@ import { BuiltMessage, ReminderContext, ReminderTypeHandler } from './reminder-t
 export const medicationParamsSchema = z.object({
   name: z.string().min(1),
   dose: z.string().min(1),
-  withFood: z.boolean().optional(),
+  mealTiming: z.enum(['before', 'after', 'with']).optional(),
 });
 
 export type MedicationParams = z.infer<typeof medicationParamsSchema>;
+
+const MEAL_TIMING_LABEL: Record<NonNullable<MedicationParams['mealTiming']>, string> = {
+  before: 'до їжі',
+  after: 'після їжі',
+  with: 'під час їжі',
+};
 
 @Injectable()
 export class MedicationHandler implements ReminderTypeHandler<MedicationParams> {
@@ -16,7 +22,7 @@ export class MedicationHandler implements ReminderTypeHandler<MedicationParams> 
   readonly paramsSchema = medicationParamsSchema;
 
   buildMessage(params: MedicationParams, context: ReminderContext): BuiltMessage {
-    const food = params.withFood ? ' (під час їжі)' : '';
+    const food = params.mealTiming ? ` (${MEAL_TIMING_LABEL[params.mealTiming]})` : '';
     const prefix = context.retryAttempt === 0 ? '💊 Час прийняти' : '⏰ Нагадую ще раз';
     return {
       text: `${prefix} *${params.name}* — ${params.dose}${food}`,

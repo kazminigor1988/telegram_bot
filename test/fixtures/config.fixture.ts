@@ -1,7 +1,7 @@
 import { AppConfig, Reminder, User } from '../../src/config/schema';
 
 type ReminderOverrides = Partial<Omit<Reminder, 'type' | 'params'>> & {
-  params?: Partial<{ name: string; dose: string; withFood: boolean }>;
+  params?: Partial<{ name: string; dose: string; mealTiming: 'before' | 'after' | 'with' }>;
 };
 
 export const buildReminder = (overrides: ReminderOverrides = {}): Reminder => ({

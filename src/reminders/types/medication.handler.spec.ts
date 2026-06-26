@@ -12,13 +12,22 @@ describe('MedicationHandler.paramsSchema', () => {
     expect(result.success).toBe(true);
   });
 
-  it('приймає params з withFood: true', () => {
+  it.each(['before', 'after', 'with'] as const)('приймає params з mealTiming: %s', (mealTiming) => {
     const result = handler.paramsSchema.safeParse({
       name: 'X',
       dose: '1',
-      withFood: true,
+      mealTiming,
     });
     expect(result.success).toBe(true);
+  });
+
+  it('відхиляє невалідний mealTiming', () => {
+    const result = handler.paramsSchema.safeParse({
+      name: 'X',
+      dose: '1',
+      mealTiming: 'sometime',
+    });
+    expect(result.success).toBe(false);
   });
 
   it('відхиляє пустий name', () => {
@@ -45,12 +54,36 @@ describe('MedicationHandler.buildMessage', () => {
     expect(text).toContain('1 таблетка');
   });
 
-  it('додає "(під час їжі)" при withFood: true', () => {
+  it('додає "(до їжі)" при mealTiming: before', () => {
     const { text } = handler.buildMessage(
-      { name: 'X', dose: '1', withFood: true },
+      { name: 'X', dose: '1', mealTiming: 'before' },
+      baseCtx,
+    );
+    expect(text).toContain('(до їжі)');
+  });
+
+  it('додає "(після їжі)" при mealTiming: after', () => {
+    const { text } = handler.buildMessage(
+      { name: 'X', dose: '1', mealTiming: 'after' },
+      baseCtx,
+    );
+    expect(text).toContain('(після їжі)');
+  });
+
+  it('додає "(під час їжі)" при mealTiming: with', () => {
+    const { text } = handler.buildMessage(
+      { name: 'X', dose: '1', mealTiming: 'with' },
       baseCtx,
     );
     expect(text).toContain('(під час їжі)');
+  });
+
+  it('не додає food-suffix, якщо mealTiming відсутній', () => {
+    const { text } = handler.buildMessage(
+      { name: 'X', dose: '1' },
+      baseCtx,
+    );
+    expect(text).not.toMatch(/\(.*їжі\)/);
   });
 
   it('використовує "Час прийняти" при retryAttempt=0', () => {
