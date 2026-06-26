@@ -83,3 +83,43 @@ describe('SchedulerService.fire', () => {
     expect(repeat.scheduleNext).not.toHaveBeenCalled();
   });
 });
+
+describe('SchedulerService.onApplicationBootstrap', () => {
+  it('реєструє по одному cron-job на кожен (user, reminder, time)', async () => {
+    const addCronJob = vi.fn();
+
+    const moduleRef = await Test.createTestingModule({
+      providers: [
+        SchedulerService,
+        StateStore,
+        ReminderTypeRegistry,
+        MedicationHandler,
+        { provide: RepeatEngineService, useValue: { scheduleNext: vi.fn(), cancel: vi.fn() } },
+        { provide: BOT_GATEWAY, useValue: { send: vi.fn() } },
+        {
+          provide: ConfigLoaderService,
+          useValue: {
+            get: () => buildConfig({
+              users: [{
+                telegramId: 1,
+                name: 'A',
+                reminders: [
+                  buildReminder({ id: 'r1', times: ['08:00', '20:00'] }),
+                  buildReminder({ id: 'r2', times: ['12:00'] }),
+                ],
+              }],
+            }),
+          },
+        },
+        { provide: SchedulerRegistry, useValue: { addCronJob } },
+      ],
+    }).compile();
+
+    moduleRef.get(ReminderTypeRegistry).register(moduleRef.get(MedicationHandler));
+    moduleRef.get(SchedulerService).onApplicationBootstrap();
+
+    expect(addCronJob).toHaveBeenCalledTimes(3);
+    const jobNames = addCronJob.mock.calls.map(call => call[0]);
+    expect(jobNames).toEqual(['1:r1:08:00', '1:r1:20:00', '1:r2:12:00']);
+  });
+});

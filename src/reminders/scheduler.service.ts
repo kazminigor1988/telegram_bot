@@ -1,6 +1,7 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Inject, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
-import { Reminder } from '../config/schema';
+import { CronJob } from 'cron';
+import { Reminder, ScheduledSlot, expandSchedule } from '../config/schema';
 import { ConfigLoaderService } from '../config/config-loader.service';
 import { BOT_GATEWAY, BotGateway, InlineKeyboardButton } from '../bot/bot.gateway';
 import { StateStore } from '../state/state.store';
@@ -11,7 +12,7 @@ import { isReminderExpired } from './expiry.util';
 import { formatInTimezone } from '../shared/time.util';
 
 @Injectable()
-export class SchedulerService {
+export class SchedulerService implements OnApplicationBootstrap {
   private readonly logger = new Logger(SchedulerService.name);
 
   constructor(
@@ -22,6 +23,28 @@ export class SchedulerService {
     @Inject(BOT_GATEWAY) private readonly bot: BotGateway,
     private readonly schedulerRegistry: SchedulerRegistry,
   ) {}
+
+  onApplicationBootstrap(): void {
+    const { bot, users } = this.config.get();
+    const slots = expandSchedule(users);
+    slots.forEach(slot => this.registerCron(slot, bot.timezone));
+    this.logger.log(`Scheduled ${slots.length} reminder slots`);
+  }
+
+  private registerCron(slot: ScheduledSlot, timezone: string): void {
+    const [hh, mm] = slot.time.split(':');
+    const cronExpr = `${mm} ${hh} * * *`;
+    const jobName = `${slot.userId}:${slot.reminder.id}:${slot.time}`;
+
+    const job = new CronJob(
+      cronExpr,
+      () => { void this.fire(slot.userId, slot.reminder); },
+      null,
+      true,
+      timezone,
+    );
+    this.schedulerRegistry.addCronJob(jobName, job);
+  }
 
   async fire(userId: number, reminder: Reminder): Promise<void> {
     const timezone = this.config.get().bot.timezone;
