@@ -14,6 +14,13 @@ export class ConfigLoaderService implements OnModuleInit {
   }
 
   async onModuleInit(): Promise<void> {
+    await this.load();
+  }
+
+  async load(): Promise<void> {
+    if (this.cachedConfig) {
+      return;
+    }
     const raw = await fs.readFile(this.configPath, 'utf8');
     const parsed = JSON.parse(raw);
     const resolved = this.resolveEnvPlaceholders(parsed);

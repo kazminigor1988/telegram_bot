@@ -16,9 +16,10 @@ import { BOT_GATEWAY } from './bot.gateway';
     forwardRef(() => RemindersModule),
     TelegrafModule.forRootAsync({
       inject: [ConfigLoaderService],
-      useFactory: (config: ConfigLoaderService) => ({
-        token: config.get().bot.token,
-      }),
+      useFactory: async (config: ConfigLoaderService) => {
+        await config.load();
+        return { token: config.get().bot.token };
+      },
     }),
   ],
   providers: [
