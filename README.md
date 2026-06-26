@@ -1,98 +1,60 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Telegram Reminder Bot
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+Локально-запускаємий Telegram-бот на NestJS, що надсилає нагадування за JSON-конфігом. Перший use case — нагадування про прийом ліків з підтвердженням і повторами.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Швидкий старт
 
-## Description
+1. **Створити бот** через [@BotFather](https://t.me/BotFather) → отримати токен.
+2. **Дізнатись свій `telegramId`** — написати [@userinfobot](https://t.me/userinfobot).
+3. **Установити залежності:**
+   ```bash
+   npm install
+   ```
+4. **Налаштувати:**
+   ```bash
+   cp .env.example .env             # вписати TELEGRAM_BOT_TOKEN
+   cp config.example.json config.json   # вписати свій telegramId та reminders
+   ```
+5. **Запустити:**
+   ```bash
+   npm run start:dev
+   ```
+6. **Перевірити у Telegram:** `/start` → отримати привітання; `/next` → побачити розклад на сьогодні; чекати найближчого `time` — мають прийти inline-кнопки.
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+## Команди боту
 
-## Project setup
+- `/start` — перевірка авторизації + привітання
+- `/next` — список нагадувань на сьогодні (поділених на «вже минули» / «ще будуть»)
 
-```bash
-$ npm install
-```
+## Структура конфігу
 
-## Compile and run the project
+Див. [`config.example.json`](./config.example.json) і повний дизайн у [`docs/superpowers/specs/2026-06-26-telegram-reminder-bot-design.md`](./docs/superpowers/specs/2026-06-26-telegram-reminder-bot-design.md).
 
-```bash
-# development
-$ npm run start
+Ключові поля reminder:
+- `id` — унікальний рядок у межах користувача
+- `type` — `medication` (наразі єдиний; розширюється через plugin handlers)
+- `params` — типозалежні параметри (для medication: `name`, `dose`, опційно `withFood`)
+- `times` — масив `"HH:mm"` (часовий пояс з `bot.timezone`)
+- `endDate` (опційно) — `YYYY-MM-DD` inclusive, останній день курсу
+- `repeat` (опційно) — `{ intervalMin, maxRetries }`
 
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
-```
-
-## Run tests
+## Розробка
 
 ```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
+npm run start:dev        # запуск з watch-mode
+npm test                 # vitest run
+npm run test:watch       # vitest watch-mode
+npm run test:cov         # coverage report
+npm run lint             # eslint --fix
+npm run build            # compile to dist/
 ```
 
-## Deployment
+## Особливості реалізації
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+- **State лише in-memory.** Активні непідтверджені нагадування зберігаються у `Map`. При рестарті процесу — очищується. Нові повтори стартують з наступного запланованого `times`.
+- **Plugin-based reminder types.** Додати новий тип = (1) реалізувати `ReminderTypeHandler`, (2) додати до `RemindersModule.providers` + register у `OnModuleInit`, (3) додати у discriminated union в `config/schema.ts`.
+- **Авторизація.** Whitelist за `telegramId` з конфігу. Не-whitelisted отримує відмову.
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+## Дизайн
 
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+Повний дизайн-документ і діаграми: [`docs/superpowers/specs/`](./docs/superpowers/specs/).
