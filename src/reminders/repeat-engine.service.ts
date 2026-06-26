@@ -2,7 +2,8 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { Reminder } from '../config/schema';
 import { StateStore } from '../state/state.store';
 import { ReminderTypeRegistry } from './types/reminder-type.registry';
-import { BOT_GATEWAY, BotGateway, InlineKeyboardButton } from '../bot/bot.gateway';
+import { BOT_GATEWAY } from '../bot/bot.gateway';
+import type { BotGateway, InlineKeyboardButton } from '../bot/bot.gateway';
 import { InlineButton } from './types/reminder-type.interface';
 
 @Injectable()
