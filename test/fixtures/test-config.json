@@ -1,0 +1,13 @@
+{
+  "bot": { "token": "${TEST_BOT_TOKEN}", "timezone": "Europe/Kyiv" },
+  "users": [{
+    "telegramId": 123,
+    "name": "Test",
+    "reminders": [{
+      "id": "r1",
+      "type": "medication",
+      "params": { "name": "X", "dose": "1" },
+      "times": ["08:00"]
+    }]
+  }]
+}
