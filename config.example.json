@@ -1,0 +1,28 @@
+{
+  "bot": {
+    "token": "${TELEGRAM_BOT_TOKEN}",
+    "timezone": "Europe/Kyiv"
+  },
+  "users": [
+    {
+      "telegramId": 0,
+      "name": "Your Name",
+      "reminders": [
+        {
+          "id": "morning-vitamin-d",
+          "type": "medication",
+          "params": {
+            "name": "Вітамін D",
+            "dose": "1 таблетка",
+            "withFood": true
+          },
+          "times": ["08:00", "20:00"],
+          "repeat": {
+            "intervalMin": 15,
+            "maxRetries": 3
+          }
+        }
+      ]
+    }
+  ]
+}
