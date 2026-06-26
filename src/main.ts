@@ -6,4 +6,7 @@ async function bootstrap() {
   await app.init();
 }
 
-bootstrap();
+bootstrap().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
