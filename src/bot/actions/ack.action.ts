@@ -24,6 +24,10 @@ export class AckAction {
     this.repeat.cancel(userId, reminderId);
     this.state.clear(userId, reminderId);
 
+    this.logger.log(
+      `Ack received telegramId=${userId} reminderId=${reminderId} wasActive=${wasActive}`,
+    );
+
     await ctx.answerCbQuery(wasActive ? 'Зафіксовано ✅' : 'Вже зафіксовано');
 
     try {

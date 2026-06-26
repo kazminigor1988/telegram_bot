@@ -1,4 +1,4 @@
-import { UseGuards } from '@nestjs/common';
+import { Logger, UseGuards } from '@nestjs/common';
 import { Ctx, Start, Update } from 'nestjs-telegraf';
 import { Context } from 'telegraf';
 import { AuthGuard } from '../auth.guard';
@@ -7,6 +7,8 @@ import { ConfigLoaderService } from '../../config/config-loader.service';
 @Update()
 @UseGuards(AuthGuard)
 export class StartCommand {
+  private readonly logger = new Logger(StartCommand.name);
+
   constructor(private readonly config: ConfigLoaderService) {}
 
   @Start()
@@ -15,6 +17,8 @@ export class StartCommand {
     const user = this.config.get().users.find(
       candidate => candidate.telegramId === senderId,
     );
+
+    this.logger.log(`/start command from telegramId=${senderId} name=${user!.name}`);
 
     await ctx.reply(
       `Привіт, ${user!.name}! 👋\n` +

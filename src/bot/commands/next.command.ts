@@ -1,4 +1,4 @@
-import { UseGuards } from '@nestjs/common';
+import { Logger, UseGuards } from '@nestjs/common';
 import { Command, Ctx, Update } from 'nestjs-telegraf';
 import { Context } from 'telegraf';
 import { AuthGuard } from '../auth.guard';
@@ -10,6 +10,8 @@ import { Slot, collectTodaysSlots, renderSection } from './next.logic';
 @Update()
 @UseGuards(AuthGuard)
 export class NextCommand {
+  private readonly logger = new Logger(NextCommand.name);
+
   constructor(
     private readonly config: ConfigLoaderService,
     private readonly registry: ReminderTypeRegistry,
@@ -20,6 +22,8 @@ export class NextCommand {
     const senderId = ctx.from!.id;
     const config = this.config.get();
     const user = config.users.find(candidate => candidate.telegramId === senderId)!;
+
+    this.logger.log(`/next command from telegramId=${senderId} name=${user.name}`);
 
     const today = formatInTimezone(new Date(), config.bot.timezone, 'yyyy-MM-dd');
     const currentTime = formatInTimezone(new Date(), config.bot.timezone, 'HH:mm');

@@ -62,6 +62,10 @@ export class RepeatEngineService {
       this.toTelegramButtons(buttons, userId, reminder.id, active.fireTs),
     );
 
+    this.logger.log(
+      `Retry sent telegramId=${userId} reminderId=${reminder.id} attempt=${nextAttempt}/${active.maxRetries} messageId=${message.message_id} text="${text}"`,
+    );
+
     this.state.update(userId, reminder.id, {
       ...active,
       retryAttempt: nextAttempt,

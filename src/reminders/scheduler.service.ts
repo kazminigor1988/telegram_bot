@@ -69,6 +69,10 @@ export class SchedulerService implements OnApplicationBootstrap {
       this.toTelegramButtons(buttons, userId, reminder.id, fireTs),
     );
 
+    this.logger.log(
+      `Reminder sent telegramId=${userId} reminderId=${reminder.id} messageId=${message.message_id} text="${text}"`,
+    );
+
     this.state.markActive(userId, reminder.id, {
       fireTs,
       messageId: message.message_id,
