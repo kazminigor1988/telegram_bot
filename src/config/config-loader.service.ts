@@ -7,8 +7,11 @@ import { AppConfig, configSchema } from './schema';
 export class ConfigLoaderService implements OnModuleInit {
   private readonly logger = new Logger(ConfigLoaderService.name);
   private cachedConfig: AppConfig | null = null;
+  private configPath = path.resolve(process.cwd(), 'config.json');
 
-  constructor(private readonly configPath: string = path.resolve(process.cwd(), 'config.json')) {}
+  setConfigPath(filePath: string): void {
+    this.configPath = filePath;
+  }
 
   async onModuleInit(): Promise<void> {
     const raw = await fs.readFile(this.configPath, 'utf8');

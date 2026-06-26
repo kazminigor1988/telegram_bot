@@ -15,7 +15,7 @@ import { MedicationHandler } from './types/medication.handler';
     ReminderTypeRegistry,
     MedicationHandler,
   ],
-  exports: [RepeatEngineService],
+  exports: [RepeatEngineService, ReminderTypeRegistry],
 })
 export class RemindersModule implements OnModuleInit {
   constructor(
