@@ -6,10 +6,13 @@ export interface Slot {
   time: string;
 }
 
-export const collectTodaysSlots = (reminders: Reminder[], todayIso: string): Slot[] => {
+export const collectTodaysSlots = (
+  reminders: Reminder[],
+  todayIso: string,
+): Slot[] => {
   return reminders
-    .filter(reminder => !isReminderExpired(reminder, todayIso))
-    .map(reminder => reminder.times.map(time => ({ reminder, time })))
+    .filter((reminder) => !isReminderExpired(reminder, todayIso))
+    .map((reminder) => reminder.times.map((time) => ({ reminder, time })))
     .flat()
     .sort((left, right) => left.time.localeCompare(right.time));
 };
@@ -22,6 +25,6 @@ export const renderSection = (
   if (slots.length === 0) {
     return null;
   }
-  const lines = slots.map(slot => `• ${slot.time} — ${summaryOf(slot)}`);
+  const lines = slots.map((slot) => `• ${slot.time} — ${summaryOf(slot)}`);
   return `${title}\n${lines.join('\n')}`;
 };

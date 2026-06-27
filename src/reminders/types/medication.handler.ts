@@ -1,6 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { z } from 'zod';
-import { BuiltMessage, ReminderContext, ReminderTypeHandler } from './reminder-type.interface';
+import {
+  BuiltMessage,
+  ReminderContext,
+  ReminderTypeHandler,
+} from './reminder-type.interface';
 
 export const medicationParamsSchema = z.object({
   name: z.string().min(1),
@@ -10,7 +14,10 @@ export const medicationParamsSchema = z.object({
 
 export type MedicationParams = z.infer<typeof medicationParamsSchema>;
 
-const MEAL_TIMING_LABEL: Record<NonNullable<MedicationParams['mealTiming']>, string> = {
+const MEAL_TIMING_LABEL: Record<
+  NonNullable<MedicationParams['mealTiming']>,
+  string
+> = {
   before: 'до їжі',
   after: 'після їжі',
   with: 'під час їжі',
@@ -21,9 +28,15 @@ export class MedicationHandler implements ReminderTypeHandler<MedicationParams> 
   readonly type = 'medication';
   readonly paramsSchema = medicationParamsSchema;
 
-  buildMessage(params: MedicationParams, context: ReminderContext): BuiltMessage {
-    const food = params.mealTiming ? ` (${MEAL_TIMING_LABEL[params.mealTiming]})` : '';
-    const prefix = context.retryAttempt === 0 ? '💊 Час прийняти' : '⏰ Нагадую ще раз';
+  buildMessage(
+    params: MedicationParams,
+    context: ReminderContext,
+  ): BuiltMessage {
+    const food = params.mealTiming
+      ? ` (${MEAL_TIMING_LABEL[params.mealTiming]})`
+      : '';
+    const prefix =
+      context.retryAttempt === 0 ? '💊 Час прийняти' : '⏰ Нагадую ще раз';
     return {
       text: `${prefix} *${params.name}* — ${params.dose}${food}`,
       buttons: [{ text: '✅ Прийняв', callbackData: '__ACK__' }],

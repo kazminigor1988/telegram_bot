@@ -14,16 +14,18 @@ export class StartCommand {
   @Start()
   async onStart(@Ctx() ctx: Context): Promise<void> {
     const senderId = ctx.from!.id;
-    const user = this.config.get().users.find(
-      candidate => candidate.telegramId === senderId,
-    );
+    const user = this.config
+      .get()
+      .users.find((candidate) => candidate.telegramId === senderId);
 
-    this.logger.log(`/start command from telegramId=${senderId} name=${user!.name}`);
+    this.logger.log(
+      `/start command from telegramId=${senderId} name=${user!.name}`,
+    );
 
     await ctx.reply(
       `Привіт, ${user!.name}! 👋\n` +
-      `Я надсилатиму нагадування за розкладом.\n` +
-      `Команда /next покаже список на сьогодні.`,
+        `Я надсилатиму нагадування за розкладом.\n` +
+        `Команда /next покаже список на сьогодні.`,
     );
   }
 }

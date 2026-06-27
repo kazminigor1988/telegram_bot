@@ -41,15 +41,21 @@ describe('dateSchema', () => {
 
 describe('repeatSchema', () => {
   it('приймає валідну конфігурацію повторів', () => {
-    expect(repeatSchema.safeParse({ intervalMin: 15, maxRetries: 3 }).success).toBe(true);
+    expect(
+      repeatSchema.safeParse({ intervalMin: 15, maxRetries: 3 }).success,
+    ).toBe(true);
   });
 
   it('відхиляє відʼємний intervalMin', () => {
-    expect(repeatSchema.safeParse({ intervalMin: -1, maxRetries: 3 }).success).toBe(false);
+    expect(
+      repeatSchema.safeParse({ intervalMin: -1, maxRetries: 3 }).success,
+    ).toBe(false);
   });
 
   it('відхиляє занадто великий intervalMin', () => {
-    expect(repeatSchema.safeParse({ intervalMin: 999, maxRetries: 3 }).success).toBe(false);
+    expect(
+      repeatSchema.safeParse({ intervalMin: 999, maxRetries: 3 }).success,
+    ).toBe(false);
   });
 });
 
@@ -75,11 +81,15 @@ describe('reminderSchema', () => {
   });
 
   it('відхиляє невідомий type', () => {
-    expect(reminderSchema.safeParse({ ...baseReminder, type: 'unknown' }).success).toBe(false);
+    expect(
+      reminderSchema.safeParse({ ...baseReminder, type: 'unknown' }).success,
+    ).toBe(false);
   });
 
   it('відхиляє пустий times', () => {
-    expect(reminderSchema.safeParse({ ...baseReminder, times: [] }).success).toBe(false);
+    expect(
+      reminderSchema.safeParse({ ...baseReminder, times: [] }).success,
+    ).toBe(false);
   });
 });
 
@@ -89,8 +99,18 @@ describe('userSchema', () => {
       telegramId: 1,
       name: 'A',
       reminders: [
-        { id: 'r1', type: 'medication', params: { name: 'X', dose: '1' }, times: ['08:00'] },
-        { id: 'r1', type: 'medication', params: { name: 'Y', dose: '2' }, times: ['09:00'] },
+        {
+          id: 'r1',
+          type: 'medication',
+          params: { name: 'X', dose: '1' },
+          times: ['08:00'],
+        },
+        {
+          id: 'r1',
+          type: 'medication',
+          params: { name: 'Y', dose: '2' },
+          times: ['09:00'],
+        },
       ],
     });
     expect(result.success).toBe(false);
@@ -101,8 +121,18 @@ describe('userSchema', () => {
       telegramId: 1,
       name: 'A',
       reminders: [
-        { id: 'r1', type: 'medication', params: { name: 'X', dose: '1' }, times: ['08:00'] },
-        { id: 'r2', type: 'medication', params: { name: 'Y', dose: '2' }, times: ['09:00'] },
+        {
+          id: 'r1',
+          type: 'medication',
+          params: { name: 'X', dose: '1' },
+          times: ['08:00'],
+        },
+        {
+          id: 'r2',
+          type: 'medication',
+          params: { name: 'Y', dose: '2' },
+          times: ['09:00'],
+        },
       ],
     });
     expect(result.success).toBe(true);
@@ -112,11 +142,20 @@ describe('userSchema', () => {
 describe('configSchema', () => {
   const validConfig = {
     bot: { token: 'abc', timezone: 'Europe/Kyiv' },
-    users: [{
-      telegramId: 1,
-      name: 'A',
-      reminders: [{ id: 'r1', type: 'medication', params: { name: 'X', dose: '1' }, times: ['08:00'] }],
-    }],
+    users: [
+      {
+        telegramId: 1,
+        name: 'A',
+        reminders: [
+          {
+            id: 'r1',
+            type: 'medication',
+            params: { name: 'X', dose: '1' },
+            times: ['08:00'],
+          },
+        ],
+      },
+    ],
   };
 
   it('приймає валідний конфіг', () => {
@@ -153,15 +192,30 @@ describe('expandSchedule', () => {
         telegramId: 1,
         name: 'A',
         reminders: [
-          { id: 'r1', type: 'medication', params: { name: 'X', dose: '1' }, times: ['08:00', '20:00'] },
-          { id: 'r2', type: 'medication', params: { name: 'Y', dose: '2' }, times: ['12:00'] },
+          {
+            id: 'r1',
+            type: 'medication',
+            params: { name: 'X', dose: '1' },
+            times: ['08:00', '20:00'],
+          },
+          {
+            id: 'r2',
+            type: 'medication',
+            params: { name: 'Y', dose: '2' },
+            times: ['12:00'],
+          },
         ],
       },
       {
         telegramId: 2,
         name: 'B',
         reminders: [
-          { id: 'r3', type: 'medication', params: { name: 'Z', dose: '3' }, times: ['09:00'] },
+          {
+            id: 'r3',
+            type: 'medication',
+            params: { name: 'Z', dose: '3' },
+            times: ['09:00'],
+          },
         ],
       },
     ];
@@ -169,12 +223,9 @@ describe('expandSchedule', () => {
     const result = expandSchedule(users);
 
     expect(result).toHaveLength(4);
-    expect(result.map(slot => `${slot.userId}:${slot.reminder.id}:${slot.time}`)).toEqual([
-      '1:r1:08:00',
-      '1:r1:20:00',
-      '1:r2:12:00',
-      '2:r3:09:00',
-    ]);
+    expect(
+      result.map((slot) => `${slot.userId}:${slot.reminder.id}:${slot.time}`),
+    ).toEqual(['1:r1:08:00', '1:r1:20:00', '1:r2:12:00', '2:r3:09:00']);
   });
 
   it('повертає [] для порожнього масиву', () => {

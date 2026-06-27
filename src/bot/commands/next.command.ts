@@ -21,16 +21,28 @@ export class NextCommand {
   async onNext(@Ctx() ctx: Context): Promise<void> {
     const senderId = ctx.from!.id;
     const config = this.config.get();
-    const user = config.users.find(candidate => candidate.telegramId === senderId)!;
+    const user = config.users.find(
+      (candidate) => candidate.telegramId === senderId,
+    )!;
 
-    this.logger.log(`/next command from telegramId=${senderId} name=${user.name}`);
+    this.logger.log(
+      `/next command from telegramId=${senderId} name=${user.name}`,
+    );
 
-    const today = formatInTimezone(new Date(), config.bot.timezone, 'yyyy-MM-dd');
-    const currentTime = formatInTimezone(new Date(), config.bot.timezone, 'HH:mm');
+    const today = formatInTimezone(
+      new Date(),
+      config.bot.timezone,
+      'yyyy-MM-dd',
+    );
+    const currentTime = formatInTimezone(
+      new Date(),
+      config.bot.timezone,
+      'HH:mm',
+    );
 
     const slots = collectTodaysSlots(user.reminders, today);
-    const past = slots.filter(slot => slot.time < currentTime);
-    const upcoming = slots.filter(slot => slot.time >= currentTime);
+    const past = slots.filter((slot) => slot.time < currentTime);
+    const upcoming = slots.filter((slot) => slot.time >= currentTime);
 
     const summaryOf = (slot: Slot) => {
       const handler = this.registry.get(slot.reminder.type);
@@ -42,9 +54,10 @@ export class NextCommand {
       renderSection('⏰ *Ще будуть:*', upcoming, summaryOf),
     ].filter((section): section is string => section !== null);
 
-    const message = sections.length === 0
-      ? '📭 На сьогодні нагадувань немає.'
-      : `📋 *Нагадування на сьогодні (${currentTime}):*\n\n${sections.join('\n\n')}`;
+    const message =
+      sections.length === 0
+        ? '📭 На сьогодні нагадувань немає.'
+        : `📋 *Нагадування на сьогодні (${currentTime}):*\n\n${sections.join('\n\n')}`;
 
     await ctx.reply(message, { parse_mode: 'Markdown' });
   }

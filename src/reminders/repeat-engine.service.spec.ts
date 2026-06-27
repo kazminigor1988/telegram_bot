@@ -28,7 +28,9 @@ describe('RepeatEngineService', () => {
 
     engine = moduleRef.get(RepeatEngineService);
     state = moduleRef.get(StateStore);
-    moduleRef.get(ReminderTypeRegistry).register(moduleRef.get(MedicationHandler));
+    moduleRef
+      .get(ReminderTypeRegistry)
+      .register(moduleRef.get(MedicationHandler));
   });
 
   afterEach(() => {
@@ -36,7 +38,10 @@ describe('RepeatEngineService', () => {
   });
 
   it('викликає bot.send через intervalMs і збільшує retryAttempt', async () => {
-    const reminder = buildReminder({ id: 'r1', repeat: { intervalMin: 15, maxRetries: 3 } });
+    const reminder = buildReminder({
+      id: 'r1',
+      repeat: { intervalMin: 15, maxRetries: 3 },
+    });
     state.markActive(123, 'r1', {
       fireTs: Date.now(),
       messageId: 1,
@@ -54,7 +59,10 @@ describe('RepeatEngineService', () => {
   });
 
   it('не викликає bot.send, якщо state.get → undefined (acked у вікно)', async () => {
-    const reminder = buildReminder({ id: 'r1', repeat: { intervalMin: 1, maxRetries: 3 } });
+    const reminder = buildReminder({
+      id: 'r1',
+      repeat: { intervalMin: 1, maxRetries: 3 },
+    });
     state.markActive(123, 'r1', {
       fireTs: Date.now(),
       messageId: 1,
@@ -71,7 +79,10 @@ describe('RepeatEngineService', () => {
   });
 
   it('зупиняється на maxRetries і очищує state', async () => {
-    const reminder = buildReminder({ id: 'r1', repeat: { intervalMin: 1, maxRetries: 3 } });
+    const reminder = buildReminder({
+      id: 'r1',
+      repeat: { intervalMin: 1, maxRetries: 3 },
+    });
     state.markActive(123, 'r1', {
       fireTs: Date.now(),
       messageId: 1,
@@ -86,7 +97,10 @@ describe('RepeatEngineService', () => {
   });
 
   it('cancel відміняє запланований повтор', async () => {
-    const reminder = buildReminder({ id: 'r1', repeat: { intervalMin: 1, maxRetries: 3 } });
+    const reminder = buildReminder({
+      id: 'r1',
+      repeat: { intervalMin: 1, maxRetries: 3 },
+    });
     state.markActive(123, 'r1', {
       fireTs: Date.now(),
       messageId: 1,
@@ -100,5 +114,64 @@ describe('RepeatEngineService', () => {
     await vi.advanceTimersByTimeAsync(60_000);
 
     expect(bot.send).not.toHaveBeenCalled();
+  });
+
+  it('при помилці bot.send інкрементує retryAttempt і планує наступний повтор', async () => {
+    const reminder = buildReminder({
+      id: 'r1',
+      repeat: { intervalMin: 1, maxRetries: 3 },
+    });
+    state.markActive(123, 'r1', {
+      fireTs: Date.now(),
+      messageId: 1,
+      retryAttempt: 0,
+      maxRetries: 3,
+      intervalMs: 60_000,
+    });
+    bot.send.mockRejectedValueOnce(new Error('ECONNRESET'));
+
+    engine.scheduleNext(123, reminder);
+    await vi.advanceTimersByTimeAsync(60_000);
+
+    const active = state.get(123, 'r1');
+    expect(active).toBeDefined();
+    expect(active!.retryAttempt).toBe(1);
+    expect(bot.send).toHaveBeenCalledTimes(1);
+
+    bot.send.mockResolvedValueOnce({ message_id: 77 });
+    await vi.advanceTimersByTimeAsync(60_000);
+
+    expect(bot.send).toHaveBeenCalledTimes(2);
+    expect(state.get(123, 'r1')!.retryAttempt).toBe(2);
+    expect(state.get(123, 'r1')!.messageId).toBe(77);
+  });
+
+  it('при помилці bot.send не кидає unhandledRejection', async () => {
+    const reminder = buildReminder({
+      id: 'r1',
+      repeat: { intervalMin: 1, maxRetries: 3 },
+    });
+    state.markActive(123, 'r1', {
+      fireTs: Date.now(),
+      messageId: 1,
+      retryAttempt: 0,
+      maxRetries: 3,
+      intervalMs: 60_000,
+    });
+    bot.send.mockRejectedValue(new Error('ECONNRESET'));
+    const rejections: unknown[] = [];
+    const handler = (reason: unknown) => {
+      rejections.push(reason);
+    };
+    process.on('unhandledRejection', handler);
+
+    try {
+      engine.scheduleNext(123, reminder);
+      await vi.advanceTimersByTimeAsync(60_000);
+      await vi.advanceTimersByTimeAsync(0);
+      expect(rejections).toEqual([]);
+    } finally {
+      process.off('unhandledRejection', handler);
+    }
   });
 });

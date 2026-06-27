@@ -31,10 +31,9 @@ export class RepeatEngineService {
       return;
     }
 
-    const timer = setTimeout(
-      () => { void this.fireRetry(userId, reminder); },
-      active.intervalMs,
-    );
+    const timer = setTimeout(() => {
+      void this.fireRetry(userId, reminder);
+    }, active.intervalMs);
     this.timers.set(key, timer);
   }
 
@@ -56,20 +55,28 @@ export class RepeatEngineService {
       retryAttempt: nextAttempt,
     });
 
-    const message = await this.bot.send(
-      userId,
-      text,
-      this.toTelegramButtons(buttons, userId, reminder.id, active.fireTs),
-    );
-
-    this.logger.log(
-      `Retry sent telegramId=${userId} reminderId=${reminder.id} attempt=${nextAttempt}/${active.maxRetries} messageId=${message.message_id} text="${text}"`,
-    );
+    let nextMessageId = active.messageId;
+    try {
+      const message = await this.bot.send(
+        userId,
+        text,
+        this.toTelegramButtons(buttons, userId, reminder.id, active.fireTs),
+      );
+      nextMessageId = message.message_id;
+      this.logger.log(
+        `Retry sent telegramId=${userId} reminderId=${reminder.id} attempt=${nextAttempt}/${active.maxRetries} messageId=${nextMessageId} text="${text}"`,
+      );
+    } catch (err: unknown) {
+      this.logger.error(
+        { err },
+        `Retry send failed telegramId=${userId} reminderId=${reminder.id} attempt=${nextAttempt}/${active.maxRetries}`,
+      );
+    }
 
     this.state.update(userId, reminder.id, {
       ...active,
       retryAttempt: nextAttempt,
-      messageId: message.message_id,
+      messageId: nextMessageId,
     });
 
     this.scheduleNext(userId, reminder);
@@ -81,7 +88,7 @@ export class RepeatEngineService {
     reminderId: string,
     fireTs: number,
   ): InlineKeyboardButton[] {
-    return buttons.map(button => ({
+    return buttons.map((button) => ({
       text: button.text,
       callback_data: `ack:${userId}:${reminderId}:${fireTs}`,
     }));

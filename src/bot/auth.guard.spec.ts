@@ -23,7 +23,10 @@ describe('AuthGuard', () => {
   let guard: AuthGuard;
 
   beforeEach(() => {
-    const config = { get: () => buildConfig({ users: [{ telegramId: 999, name: 'A', reminders: [] }] }) };
+    const config = {
+      get: () =>
+        buildConfig({ users: [{ telegramId: 999, name: 'A', reminders: [] }] }),
+    };
     guard = new AuthGuard(config as any);
   });
 
@@ -35,7 +38,9 @@ describe('AuthGuard', () => {
   it('відмовляє і відповідає не-whitelisted', async () => {
     const { executionContext, reply } = makeContext(111);
     await expect(guard.canActivate(executionContext)).resolves.toBe(false);
-    expect(reply).toHaveBeenCalledWith(expect.stringContaining('немає доступу'));
+    expect(reply).toHaveBeenCalledWith(
+      expect.stringContaining('немає доступу'),
+    );
   });
 
   it('відмовляє при відсутньому ctx.from', async () => {

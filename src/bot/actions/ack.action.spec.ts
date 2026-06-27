@@ -15,7 +15,11 @@ describe('AckAction.onAck', () => {
 
   it('викликає cancel + clear для активного нагадування', async () => {
     state.markActive(123, 'r1', {
-      fireTs: 0, messageId: 1, retryAttempt: 0, maxRetries: 3, intervalMs: 60_000,
+      fireTs: 0,
+      messageId: 1,
+      retryAttempt: 0,
+      maxRetries: 3,
+      intervalMs: 60_000,
     });
 
     const answerCbQuery = vi.fn();
@@ -52,7 +56,9 @@ describe('AckAction.onAck', () => {
     const ctx = {
       match: ['ack:123:r1:1000', '123', 'r1', '1000'],
       answerCbQuery: vi.fn(),
-      editMessageReplyMarkup: vi.fn().mockRejectedValue(new Error('message is not modified')),
+      editMessageReplyMarkup: vi
+        .fn()
+        .mockRejectedValue(new Error('message is not modified')),
     } as any;
 
     await expect(action.onAck(ctx)).resolves.toBeUndefined();

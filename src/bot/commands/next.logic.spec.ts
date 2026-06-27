@@ -9,7 +9,7 @@ describe('collectTodaysSlots', () => {
       buildReminder({ id: 'b', times: ['14:00'] }),
     ];
     const slots = collectTodaysSlots(reminders, '2026-06-26');
-    expect(slots.map(slot => `${slot.reminder.id}@${slot.time}`)).toEqual([
+    expect(slots.map((slot) => `${slot.reminder.id}@${slot.time}`)).toEqual([
       'a@08:00',
       'b@14:00',
       'a@20:00',
@@ -23,7 +23,7 @@ describe('collectTodaysSlots', () => {
       buildReminder({ id: 'c', times: ['10:00'] }),
     ];
     const slots = collectTodaysSlots(reminders, '2026-06-26');
-    expect(slots.map(slot => slot.reminder.id)).toEqual(['b', 'c']);
+    expect(slots.map((slot) => slot.reminder.id)).toEqual(['b', 'c']);
   });
 });
 
@@ -37,7 +37,11 @@ describe('renderSection', () => {
       { reminder: buildReminder({ id: 'r1' }), time: '08:00' },
       { reminder: buildReminder({ id: 'r2' }), time: '20:00' },
     ];
-    const result = renderSection('Title', slots, slot => `summary-${slot.reminder.id}`);
+    const result = renderSection(
+      'Title',
+      slots,
+      (slot) => `summary-${slot.reminder.id}`,
+    );
     expect(result).toBe('Title\n• 08:00 — summary-r1\n• 20:00 — summary-r2');
   });
 });

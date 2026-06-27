@@ -12,14 +12,17 @@ describe('MedicationHandler.paramsSchema', () => {
     expect(result.success).toBe(true);
   });
 
-  it.each(['before', 'after', 'with'] as const)('приймає params з mealTiming: %s', (mealTiming) => {
-    const result = handler.paramsSchema.safeParse({
-      name: 'X',
-      dose: '1',
-      mealTiming,
-    });
-    expect(result.success).toBe(true);
-  });
+  it.each(['before', 'after', 'with'] as const)(
+    'приймає params з mealTiming: %s',
+    (mealTiming) => {
+      const result = handler.paramsSchema.safeParse({
+        name: 'X',
+        dose: '1',
+        mealTiming,
+      });
+      expect(result.success).toBe(true);
+    },
+  );
 
   it('відхиляє невалідний mealTiming', () => {
     const result = handler.paramsSchema.safeParse({
@@ -79,10 +82,7 @@ describe('MedicationHandler.buildMessage', () => {
   });
 
   it('не додає food-suffix, якщо mealTiming відсутній', () => {
-    const { text } = handler.buildMessage(
-      { name: 'X', dose: '1' },
-      baseCtx,
-    );
+    const { text } = handler.buildMessage({ name: 'X', dose: '1' }, baseCtx);
     expect(text).not.toMatch(/\(.*їжі\)/);
   });
 
@@ -109,7 +109,8 @@ describe('MedicationHandler.buildSummary', () => {
   const handler = new MedicationHandler();
 
   it('форматує "💊 NAME — DOSE"', () => {
-    expect(handler.buildSummary({ name: 'Вітамін D', dose: '1 таблетка' }))
-      .toBe('💊 Вітамін D — 1 таблетка');
+    expect(
+      handler.buildSummary({ name: 'Вітамін D', dose: '1 таблетка' }),
+    ).toBe('💊 Вітамін D — 1 таблетка');
   });
 });

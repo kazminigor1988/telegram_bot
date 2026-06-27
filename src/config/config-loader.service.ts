@@ -37,7 +37,7 @@ export class ConfigLoaderService implements OnModuleInit {
   }
 
   private formatZodError(error: ZodError, source: unknown): string {
-    const lines = error.issues.map(issue => {
+    const lines = error.issues.map((issue) => {
       const path = issue.path.join('.');
       const received = this.valueAtPath(source, issue.path);
       const receivedStr = JSON.stringify(received);
@@ -46,7 +46,10 @@ export class ConfigLoaderService implements OnModuleInit {
     return `Config validation failed:\n${lines.join('\n')}`;
   }
 
-  private valueAtPath(source: unknown, segments: ReadonlyArray<PropertyKey>): unknown {
+  private valueAtPath(
+    source: unknown,
+    segments: ReadonlyArray<PropertyKey>,
+  ): unknown {
     return segments.reduce<unknown>((current, segment) => {
       if (current && typeof current === 'object') {
         return (current as Record<PropertyKey, unknown>)[segment];
@@ -75,11 +78,14 @@ export class ConfigLoaderService implements OnModuleInit {
       return value;
     }
     if (Array.isArray(value)) {
-      return value.map(item => this.resolveEnvPlaceholders(item));
+      return value.map((item) => this.resolveEnvPlaceholders(item));
     }
     if (value && typeof value === 'object') {
       return Object.fromEntries(
-        Object.entries(value).map(([key, val]) => [key, this.resolveEnvPlaceholders(val)]),
+        Object.entries(value).map(([key, val]) => [
+          key,
+          this.resolveEnvPlaceholders(val),
+        ]),
       );
     }
     return value;

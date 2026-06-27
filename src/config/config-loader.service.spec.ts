@@ -3,7 +3,10 @@ import * as path from 'node:path';
 import * as fs from 'node:fs/promises';
 import { ConfigLoaderService } from './config-loader.service';
 
-const FIXTURE_PATH = path.resolve(__dirname, '../../test/fixtures/test-config.json');
+const FIXTURE_PATH = path.resolve(
+  __dirname,
+  '../../test/fixtures/test-config.json',
+);
 
 describe('ConfigLoaderService', () => {
   beforeEach(() => {
@@ -35,7 +38,10 @@ describe('ConfigLoaderService', () => {
   });
 
   it('кидає помилку при невалідному JSON', async () => {
-    const badPath = path.resolve(__dirname, '../../test/fixtures/bad-config.json');
+    const badPath = path.resolve(
+      __dirname,
+      '../../test/fixtures/bad-config.json',
+    );
     await fs.writeFile(badPath, '{ not valid json');
     try {
       const service = new ConfigLoaderService();

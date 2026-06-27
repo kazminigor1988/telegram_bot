@@ -7,7 +7,12 @@ describe('StartCommand.onStart', () => {
     const reply = vi.fn();
     const ctx = { from: { id: 123 }, reply } as any;
 
-    const config = { get: () => buildConfig({ users: [{ telegramId: 123, name: 'Igor', reminders: [] }] }) };
+    const config = {
+      get: () =>
+        buildConfig({
+          users: [{ telegramId: 123, name: 'Igor', reminders: [] }],
+        }),
+    };
     const command = new StartCommand(config as any);
 
     await command.onStart(ctx);

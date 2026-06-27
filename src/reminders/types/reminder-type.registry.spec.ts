@@ -17,7 +17,9 @@ describe('ReminderTypeRegistry', () => {
   });
 
   it('кидає помилку для невідомого type', () => {
-    expect(() => registry.get('unknown')).toThrow(/No handler for reminder type/);
+    expect(() => registry.get('unknown')).toThrow(
+      /No handler for reminder type/,
+    );
   });
 
   it('register другий раз з тим самим type замінює handler', () => {

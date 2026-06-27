@@ -1,4 +1,9 @@
-import { Inject, Injectable, Logger, OnApplicationBootstrap } from '@nestjs/common';
+import {
+  Inject,
+  Injectable,
+  Logger,
+  OnApplicationBootstrap,
+} from '@nestjs/common';
 import { SchedulerRegistry } from '@nestjs/schedule';
 import { CronJob } from 'cron';
 import { Reminder, ScheduledSlot, expandSchedule } from '../config/schema';
@@ -28,7 +33,7 @@ export class SchedulerService implements OnApplicationBootstrap {
   onApplicationBootstrap(): void {
     const { bot, users } = this.config.get();
     const slots = expandSchedule(users);
-    slots.forEach(slot => this.registerCron(slot, bot.timezone));
+    slots.forEach((slot) => this.registerCron(slot, bot.timezone));
     this.logger.log(`Scheduled ${slots.length} reminder slots`);
   }
 
@@ -39,7 +44,9 @@ export class SchedulerService implements OnApplicationBootstrap {
 
     const job = new CronJob(
       cronExpr,
-      () => { void this.fire(slot.userId, slot.reminder); },
+      () => {
+        void this.fire(slot.userId, slot.reminder);
+      },
       null,
       true,
       timezone,
@@ -51,7 +58,9 @@ export class SchedulerService implements OnApplicationBootstrap {
     const timezone = this.config.get().bot.timezone;
     const today = formatInTimezone(new Date(), timezone, 'yyyy-MM-dd');
     if (isReminderExpired(reminder, today)) {
-      this.logger.log(`Reminder ${reminder.id} expired (today=${today}, endDate=${reminder.endDate}) — skipping`);
+      this.logger.log(
+        `Reminder ${reminder.id} expired (today=${today}, endDate=${reminder.endDate}) — skipping`,
+      );
       return;
     }
 
@@ -63,26 +72,33 @@ export class SchedulerService implements OnApplicationBootstrap {
       retryAttempt: 0,
     });
 
-    const message = await this.bot.send(
-      userId,
-      text,
-      this.toTelegramButtons(buttons, userId, reminder.id, fireTs),
-    );
+    try {
+      const message = await this.bot.send(
+        userId,
+        text,
+        this.toTelegramButtons(buttons, userId, reminder.id, fireTs),
+      );
 
-    this.logger.log(
-      `Reminder sent telegramId=${userId} reminderId=${reminder.id} messageId=${message.message_id} text="${text}"`,
-    );
+      this.logger.log(
+        `Reminder sent telegramId=${userId} reminderId=${reminder.id} messageId=${message.message_id} text="${text}"`,
+      );
 
-    this.state.markActive(userId, reminder.id, {
-      fireTs,
-      messageId: message.message_id,
-      retryAttempt: 0,
-      maxRetries: reminder.repeat?.maxRetries ?? 0,
-      intervalMs: (reminder.repeat?.intervalMin ?? 0) * 60_000,
-    });
+      this.state.markActive(userId, reminder.id, {
+        fireTs,
+        messageId: message.message_id,
+        retryAttempt: 0,
+        maxRetries: reminder.repeat?.maxRetries ?? 0,
+        intervalMs: (reminder.repeat?.intervalMin ?? 0) * 60_000,
+      });
 
-    if (reminder.repeat) {
-      this.repeat.scheduleNext(userId, reminder);
+      if (reminder.repeat) {
+        this.repeat.scheduleNext(userId, reminder);
+      }
+    } catch (err: unknown) {
+      this.logger.error(
+        { err },
+        `Reminder send failed telegramId=${userId} reminderId=${reminder.id}`,
+      );
     }
   }
 
@@ -92,7 +108,7 @@ export class SchedulerService implements OnApplicationBootstrap {
     reminderId: string,
     fireTs: number,
   ): InlineKeyboardButton[] {
-    return buttons.map(button => ({
+    return buttons.map((button) => ({
       text: button.text,
       callback_data: `ack:${userId}:${reminderId}:${fireTs}`,
     }));
